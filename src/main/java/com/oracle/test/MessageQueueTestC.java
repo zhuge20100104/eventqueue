@@ -1,6 +1,7 @@
 package com.oracle.test;
 
 import com.oracle.test.servers.EventQueueServer;
+import com.oracle.test.servers.Message;
 import com.oracle.test.servers.MessageCallBack;
 import com.oracle.test.servers.MessageData;
 import org.testng.annotations.AfterTest;
@@ -12,28 +13,38 @@ public class MessageQueueTestC {
     private EventQueueServer eventServer;
     @BeforeTest
     void before() {
-        eventServer = new EventQueueServer();
+        eventServer = EventQueueServer.getServer();
 
-        MessageData data = new MessageData();
-        eventServer.subscribe("C");
-        eventServer.startServer();
+
     }
 
     @Test
     void printCMessage() {
-        System.out.println("Print C Message");
 
-        eventServer.publish("C", "MessageC", new MessageCallBack() {
+        MessageData data = new MessageData();
+        data.message.fromName = "C";
+        data.message.message = "";
+        data.messageCallBack = new MessageCallBack() {
             @Override
-            public void handle(String message) {
-                System.out.println(message);
+            public void handle(Message message) {
+                System.out.println(message.message);
+                cHandler();
             }
-        });
+        };
+
+        eventServer.subscribe("C",data);
+        eventServer.startServer();
+
+    }
+
+
+    private void cHandler() {
+        System.out.println("In cHandler");
+        System.out.println("Print C Message");
     }
 
     @AfterTest
     void after() {
-
         eventServer.stopServer();
     }
 }

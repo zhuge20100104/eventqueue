@@ -1,46 +1,35 @@
 package com.oracle.test.servers;
 
-import sun.plugin2.message.Message;
 
-import java.util.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class EventQueueServer extends ThreadServer {
 
-    private static final int THREAD_NUM = 8;
+    private  static final EventQueueServer instance = new EventQueueServer();
 
+    public  static EventQueueServer getServer() {
+        return instance;
+    }
 
-    private ExecutorService executor;
+    private Queue<Message> clientMessages;
 
-    private Map<String, Queue<MessageData>> eventMap;
+    private Map<String, MessageData> eventMap;
 
-    public EventQueueServer() {
+    private EventQueueServer() {
         super();
-        eventMap = new HashMap<String, Queue<MessageData>>();
-        executor = Executors.newFixedThreadPool(THREAD_NUM);
-    }
-
-    public static class MessageHandler implements Runnable {
-
-        private MessageData data;
-
-        public MessageHandler(MessageData data) {
-            this.data = data;
-        }
-
-
-        @Override
-        public void run() {
-            data.messageCallBack.handle(data.Message);
-        }
+        clientMessages = new ArrayBlockingQueue<Message>(3000);
+        eventMap = new HashMap<String, MessageData>();
     }
 
 
-    public void subscribe(String fromName) {
-        this.eventMap.put(fromName, new ArrayBlockingQueue<MessageData>(1000));
+
+    public void subscribe(String fromName,MessageData messageData) {
+        this.eventMap.put(fromName, messageData);
 
     }
 
@@ -49,28 +38,26 @@ public class EventQueueServer extends ThreadServer {
     }
 
 
-    public void publish(String fromName, String message, MessageCallBack callBack) {
-        MessageData data = new MessageData();
-        data.fromName = fromName;
-        data.Message = message;
-        data.messageCallBack = callBack;
-        Queue<MessageData> eventQueue = this.eventMap.get(fromName);
-        eventQueue.add(data);
-
+    public void publish(String fromName, String message) {
+        Message msg = new Message();
+        msg.fromName = fromName;
+        msg.message = message;
+        this.clientMessages.add(msg);
     }
 
 
     @Override
     public void run() {
         while (this.running) {
-//            MessageData data = this.mQueue.poll();
+            Message msg = this.clientMessages.poll();
 
-            if(eventMap.size()>0) {
-                for(Map.Entry<String, Queue<MessageData>> entry: eventMap.entrySet()) {
-                    Queue<MessageData> datas = entry.getValue();
-                    if(datas.size() > 0) {
-                        MessageData data = datas.poll();
-                        executor.submit(new MessageHandler(data), data);
+            if(msg!=null) {
+                if (eventMap.size() > 0) {
+                    for (Map.Entry<String, MessageData> entry : eventMap.entrySet()) {
+                        System.out.println("Send msg to: " + entry.getKey());
+                        MessageData data0 = entry.getValue();
+                        data0.messageCallBack.handle(msg);
+
                     }
                 }
             }
