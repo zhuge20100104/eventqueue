@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<suite name="Message Queue Test" verbose="1">
+    <test name="Test Message Queue Transfer" parallel="classes" thread-count="3">
+        <classes>
+            <class name="com.oracle.test.MessageQueueTestA">
+                <methods>
+                    <include name="printAMessage"></include>
+                </methods>
+            </class>
+
+            <class name="com.oracle.test.MessageQueueTestC">
+                <methods>
+                    <include name="printCMessage"></include>
+                </methods>
+            </class>
+
+            <class name="com.oracle.test.MessageQueueTestB">
+                <methods>
+                    <include name="printBMessage"></include>
+                </methods>
+            </class>
+
+        </classes>
+    </test>
+</suite>
